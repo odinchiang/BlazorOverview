@@ -18,11 +18,12 @@
             <tr>
                 @*透過資料綁定，把集合清單內的紀錄屬性，顯示在網頁上*@
                 <td>@noteItem.Title</td>
-                @*這個按鈕尚未進行任何設計*@
-                <td><input type="button" class="btn btn-primary" value="修改"/></td>
+                @*透過 Blazor 的資料綁定，將修改按鈕的點選事件，綁定到 C# 的委派處理方法*@
+                @*當該修改按鈕點選事件被觸發的時候，將會把現在顯示的紀錄物件傳送過去*@
+                <td><input type="button" class="btn btn-primary" value="修改" @onclick="()=>Update(noteItem)" /></td>
                 <td>
                     @*透過 Blazor 的資料綁定，將刪除按鈕的點選事件，綁定到 C# 的委派處理方法*@
-                    <input type="button" class="btn btn-danger" value="刪除" @onclick="()=>Delete(noteItem)"/>
+                    <input type="button" class="btn btn-danger" value="刪除" @onclick="()=>Delete(noteItem)" />
                 </td>
             </tr>
         }
@@ -33,33 +34,163 @@
     <input type="button" class="btn btn-primary" value="新增" @onclick="Add" />
 </div>
 
+@*由 C# 的變數 ShowPopup 來控制，這裡的 HTML 標記是否要顯示出來，這裡完全不需要使用到 Javascript*@
+@if (ShowPopup)
+{
+    // 這裡是 BootStrap 的標準對話窗標記宣告
+    <div class="modal" tabindex="-1" role="dialog" style="display:block">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"> 記事項目</h5>
+                    @* 這裡將會宣告一個按鈕，點選這個按鈕，將會關閉此對話窗*@
+                    <button type="button" class="close" @onclick="CloseDialog">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-9">
+                            <div class="row p-2">
+                                @* 使用 Blazor 提供的 EditForm 元件來進行表單資料輸入與驗證*@
+                                @* 其中 EditForm 提供有效資料驗證 OnValidSubmit 的事件*@
+                                <EditForm Model="@CurrentMyNote" OnValidSubmit="@HandleValidSubmit">
+                                    @*DataAnnotationsValidator 元件會使用資料模型的屬性宣告，將驗證支援附加至EditContext*@
+                                    <DataAnnotationsValidator />
+                                    @*ValidationSummary 元件會匯總所有驗證訊息*@
+                                    <ValidationSummary />
+                                    <div class="form-group">
+                                        <label for="taskName"> 事項名稱</label>
+                                        @* 這裡提供使用者輸入該事項的名稱，並會儲存到Title 屬性內*@
+                                        <InputText id="name" class="form-control" @bind-Value="@CurrentMyNote.Title" />
+                                    </div>
+                                    @* 宣告儲存按鈕，點選後，若資料沒有錯誤，將會觸發OnValidSubmit 所綁定的事件委派方法*@
+                                    <button type="submit" class="btn btn-primary">
+                                        儲存
+                                    </button>
+                                </EditForm>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 
 
 @code {
-    // 儲存要顯示的集合清單內的所有紀錄
+    /// <summary>
+    /// 儲存要顯示的集合清單內的所有紀錄
+    /// </summary>
     public List<MyNote> Notes { get; set; } = new List<MyNote>();
 
-    // 元件建立的時候，所要執行的初始化工作
+    /// <summary>
+    /// 正在編輯或新增的紀錄物件
+    /// </summary>
+    public MyNote CurrentMyNote { get; set; } = new MyNote();
+
+    /// <summary>
+    /// 記錄下修改前的紀錄物件
+    /// </summary>
+    public MyNote OrigMyNote { get; set; } = new MyNote();
+
+    /// <summary>
+    /// 是否要顯示新增或修改對話窗
+    /// </summary>
+    public bool ShowPopup { get; set; } = false;
+
+    /// <summary>
+    /// 這次處理的紀錄是否為新增
+    /// true: 新增
+    /// false: 修改
+    /// </summary>
+    public bool IsNewMode { get; set; }
+
+    /// <summary>
+    /// 元件建立的時候，所要執行的初始化工作
+    /// </summary>
     protected override void OnInitialized()
     {
         // 預設建立的集合清單紀錄
         Notes = new List<MyNote>()
-        {
+{
             new MyNote(){Title = "買蘋果"},
             new MyNote(){Title = "買西瓜"}
         };
     }
 
-    // 新增按鈕的點選事件之處理委派方法
+    /// <summary>
+    /// 新增按鈕的點選事件之處理委派方法
+    /// </summary>
     private void Add()
     {
-        // 加入一筆紀錄到集合清單內
-        Notes.Add(new MyNote(){Title = $"新事項 ({DateTime.Now:yyyy/MM/dd HH:mm:ss})"});
+        // 設定此次要進行新增一筆紀錄
+        IsNewMode = true;
+        // 產生要新增的紀錄物件
+        CurrentMyNote = new MyNote();
+        // 顯示新增紀錄使用的對話窗
+        ShowPopup = true;
     }
 
+    /// <summary>
+    /// 刪除按鈕的點選事件之處理委派方法
+    /// </summary>
+    /// <param name="note"></param>
     private void Delete(MyNote note)
     {
         // 從集合清單中刪除所選擇的紀錄
         Notes.Remove(note);
+    }
+
+    /// <summary>
+    /// 修改按鈕的點選事件之處理委派方法
+    /// </summary>
+    /// <param name="note"></param>
+    private void Update(MyNote note)
+    {
+        // 設定此次要進行修改紀錄
+        IsNewMode = false;
+        CurrentMyNote = OrigMyNote = note.Clone();
+
+        // 產生一個物件副本，作為要修改的紀錄物件
+        CurrentMyNote = note.Clone();
+
+        // 保存此次要修改的紀錄物件
+        OrigMyNote = note;
+
+        // 顯示新增紀錄使用的對話窗
+        ShowPopup = true;
+    }
+
+    /// <summary>
+    /// 關閉對話窗的方法
+    /// </summary>
+    private void CloseDialog()
+    {
+        // 設定要關閉對話窗的變數，讓對話窗的 HTML 標記不會顯示在瀏覽器畫面上
+        ShowPopup = false;
+    }
+
+    /// <summary>
+    /// 當使用者連完資料且點選儲存按鈕之後，若沒有錯誤產生，就會觸發此委派方法
+    /// </summary>
+    private void HandleValidSubmit()
+    {
+        // 設定要關閉對話窗的變數，讓對話窗的 HTML 標記部會顯示在瀏覽器畫面上
+        ShowPopup = false;
+
+        // 判斷此次動作是要新增還是要修改紀錄
+        if (IsNewMode)
+        {
+            // 加入一筆紀錄到集合清單內
+            Notes.Add(CurrentMyNote);
+        }
+        else
+        {
+            // 修改該紀錄
+            OrigMyNote.Title = CurrentMyNote.Title;
+        }
     }
 }
