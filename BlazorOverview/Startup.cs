@@ -10,6 +10,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using BlazorOverview.Data;
+using BlazorOverview.Services;
 
 namespace BlazorOverview
 {
@@ -29,6 +30,9 @@ namespace BlazorOverview
             services.AddRazorPages();
             services.AddServerSideBlazor();
             services.AddSingleton<WeatherForecastService>();
+
+            // 進行 DI 容器註冊
+            services.AddScoped<IMyNoteService, MyNoteService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

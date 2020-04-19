@@ -1,4 +1,9 @@
 ﻿@using BlazorOverview.Models
+@*加入要使用 BlazorOverview.Services 命名空間的API*@
+@using BlazorOverview.Services
+@*當這個 Blazor 元件建立之後，要注入這個 IMyNoteService 抽象型別的具體實作物件*@
+@inject IMyNoteService MyNoteService
+
 
 <h3>我的記事</h3>
 
@@ -109,16 +114,12 @@
     public bool IsNewMode { get; set; }
 
     /// <summary>
-    /// 元件建立的時候，所要執行的初始化工作
+    /// 元件建立的時候，所要執行的初始化工作，這裡使用非同步方式來呼叫
     /// </summary>
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        // 預設建立的集合清單紀錄
-        Notes = new List<MyNote>()
-{
-            new MyNote(){Title = "買蘋果"},
-            new MyNote(){Title = "買西瓜"}
-        };
+        // 透過 IMyNoteService.RetriveAsync() 方法，來取得所有記事清單
+        Notes = await MyNoteService.RetriveAsync();
     }
 
     /// <summary>
@@ -138,10 +139,10 @@
     /// 刪除按鈕的點選事件之處理委派方法
     /// </summary>
     /// <param name="note"></param>
-    private void Delete(MyNote note)
+    private async void Delete(MyNote note)
     {
-        // 從集合清單中刪除所選擇的紀錄
-        Notes.Remove(note);
+        // 透過 IMyNoteService.DeleteAsync() 方法，從集合清單中刪除所選擇的紀錄
+        await MyNoteService.DeleteAsync(note);
     }
 
     /// <summary>
@@ -176,7 +177,7 @@
     /// <summary>
     /// 當使用者連完資料且點選儲存按鈕之後，若沒有錯誤產生，就會觸發此委派方法
     /// </summary>
-    private void HandleValidSubmit()
+    private async void HandleValidSubmit()
     {
         // 設定要關閉對話窗的變數，讓對話窗的 HTML 標記部會顯示在瀏覽器畫面上
         ShowPopup = false;
@@ -184,13 +185,17 @@
         // 判斷此次動作是要新增還是要修改紀錄
         if (IsNewMode)
         {
-            // 加入一筆紀錄到集合清單內
-            Notes.Add(CurrentMyNote);
+            // 透過 IMyNoteService.CreateAsync() 方法，加入一筆紀錄到集合清單內
+            await MyNoteService.CreateAsync(CurrentMyNote);
         }
         else
         {
-            // 修改該紀錄
-            OrigMyNote.Title = CurrentMyNote.Title;
+            // 透過 IMyNoteService.Update.Async() 方法，修改該紀錄
+            await MyNoteService.UpdateAsync(OrigMyNote, CurrentMyNote);
         }
+
+        // 透過 IMyNoteService.RetriveAsync() 方法，來取得所有記事清單
+        Notes = await MyNoteService.RetriveAsync();
+        StateHasChanged();
     }
 }
