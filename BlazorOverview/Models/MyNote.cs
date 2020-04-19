@@ -5,6 +5,8 @@ namespace BlazorOverview.Models
 {
     public class MyNote : ICloneable
     {
+        public int Id { get; set; }
+
         // 加上這個屬性宣告，讓表單資料驗證可以檢查 Title 不可為空白
         [Required(ErrorMessage = "事項標題不可為空白")]
         public string Title { get; set; }

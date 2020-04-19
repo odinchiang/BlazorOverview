@@ -1,16 +1,12 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using BlazorOverview.Data;
+using BlazorOverview.Models;
 using BlazorOverview.Services;
+using Microsoft.EntityFrameworkCore;
 
 namespace BlazorOverview
 {
@@ -32,7 +28,14 @@ namespace BlazorOverview
             services.AddSingleton<WeatherForecastService>();
 
             // 進行 DI 容器註冊
-            services.AddScoped<IMyNoteService, MyNoteService>();
+            //services.AddScoped<IMyNoteService, MyNoteService>();
+            services.AddScoped<IMyNoteService, MyNoteDbService>();
+
+            // 宣告使用 SQLite 資料庫
+            services.AddDbContext<MyNoteDbContext>(options =>
+            {
+                options.UseSqlite("Data Source=MyNote.db");
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
