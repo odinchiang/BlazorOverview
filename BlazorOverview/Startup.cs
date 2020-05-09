@@ -1,3 +1,6 @@
+using System;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -31,12 +34,19 @@ namespace BlazorOverview
             // 新增控制器和 API 相關功能的支援，但不會加入 Views 或 Pages
             services.AddControllers();
 
+            // 使用 IHttpClientFactory 來註冊 IMyNoteService 服務
+            services.AddHttpClient<IMyNoteService, MyNoteWebApiService>(client =>
+            {
+                client.BaseAddress = new Uri("http://localhost:5000/");
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            });
+
             // 註冊 Blazored Modal 元件要用到的服務
             services.AddBlazoredModal();
 
             // 進行 DI 容器註冊
             //services.AddScoped<IMyNoteService, MyNoteService>();
-            services.AddScoped<IMyNoteService, MyNoteDbService>();
+            //services.AddScoped<IMyNoteService, MyNoteDbService>();
 
             // 宣告使用 SQLite 資料庫
             services.AddDbContext<MyNoteDbContext>(options =>
@@ -59,7 +69,7 @@ namespace BlazorOverview
                 app.UseHsts();
             }
 
-            app.UseHttpsRedirection();
+            //app.UseHttpsRedirection();
             app.UseStaticFiles();
 
             app.UseRouting();
