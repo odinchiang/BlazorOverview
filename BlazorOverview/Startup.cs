@@ -7,6 +7,7 @@ using BlazorOverview.Data;
 using BlazorOverview.Models;
 using BlazorOverview.Services;
 using Microsoft.EntityFrameworkCore;
+using Blazored.Modal;
 
 namespace BlazorOverview
 {
@@ -26,6 +27,9 @@ namespace BlazorOverview
             services.AddRazorPages();
             services.AddServerSideBlazor();
             services.AddSingleton<WeatherForecastService>();
+
+            // 註冊 Blazored Modal 元件要用到的服務
+            services.AddBlazoredModal();
 
             // 進行 DI 容器註冊
             //services.AddScoped<IMyNoteService, MyNoteService>();
