@@ -28,6 +28,9 @@ namespace BlazorOverview
             services.AddServerSideBlazor();
             services.AddSingleton<WeatherForecastService>();
 
+            // 新增控制器和 API 相關功能的支援，但不會加入 Views 或 Pages
+            services.AddControllers();
+
             // 註冊 Blazored Modal 元件要用到的服務
             services.AddBlazoredModal();
 
@@ -63,6 +66,9 @@ namespace BlazorOverview
 
             app.UseEndpoints(endpoints =>
             {
+                //新增屬性路由控制器的支援
+                endpoints.MapControllers();
+
                 endpoints.MapBlazorHub();
                 endpoints.MapFallbackToPage("/_Host");
             });
